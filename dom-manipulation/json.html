@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,31 +9,118 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             background-color: #f4f4f4;
+            text-align: center;
         }
+
+        h1 {
+            color: #333;
+        }
+
         #quoteDisplay {
-            margin: 20px 0;
+            margin: 20px auto;
             padding: 20px;
+            width: 80%;
+            max-width: 500px;
             border: 1px solid #ccc;
             background-color: #fff;
             border-radius: 5px;
+            font-size: 1.2em;
+            font-style: italic;
         }
-        input {
-            margin-right: 10px;
+
+        .btn {
+            padding: 10px 15px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .btn-primary {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #218838;
+        }
+
+        .btn-secondary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .input-group {
+            margin: 15px 0;
+        }
+
+        input, select {
+            padding: 10px;
+            width: 80%;
+            max-width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        #filteredQuotes {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        #filteredQuotes li {
+            background-color: #fff;
+            padding: 10px;
+            margin: 5px auto;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
 <body>
     <h1>Dynamic Quote Generator</h1>
-    <div id="quoteDisplay">Click "Show New Quote" to display a quote!</div>
-    <button id="newQuote">Show New Quote</button>
-    
-    <div>
-        <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
-        <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
-        <button onclick="addQuote()">Add Quote</button>
-    </div>
 
-    <button id="exportQuotes">Export Quotes as JSON</button>
+    <!-- Display Random Quote -->
+    <div id="quoteDisplay">Click "Show New Quote" to display a quote!</div>
+    <button id="newQuote" class="btn btn-secondary">Show New Quote</button>
+
+    <!-- Add New Quote -->
+    <h2>Add a New Quote</h2>
+    <div class="input-group">
+        <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+    </div>
+    <div class="input-group">
+        <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+    </div>
+    <button onclick="addQuote()" class="btn btn-primary">Add Quote</button>
+
+    <!-- Filter Quotes by Category -->
+    <h2>Filter Quotes</h2>
+    <select id="categoryFilter">
+        <option value="">All Categories</option>
+    </select>
+
+    <ul id="filteredQuotes"></ul>
+
+    <!-- Import / Export Quotes -->
+    <h2>Import & Export Quotes</h2>
+    <button id="exportQuotes" class="btn btn-danger">Export Quotes as JSON</button>
     <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
 
     <script src="json.js"></script>
