@@ -37,6 +37,19 @@ function exportQuotes() {
     document.body.removeChild(a);
 }
 
+
+displayQuotes();
+
+function addQuote() {
+    const newQuote = prompt('Enter a new quote:');
+    if (newQuote) {
+        quotes.push(newQuote);
+        localStorage.setItem('quotes', JSON.stringify(quotes));
+        displayQuotes();
+    }
+}
+
+
 function importFromJsonFile(event) {
     const fileReader = new FileReader();
     fileReader.onload = function(event) {
