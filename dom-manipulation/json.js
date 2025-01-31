@@ -84,6 +84,6 @@ addQuoteBtn.addEventListener('click', addQuote);
 exportBtn.addEventListener('click', exportQuotes);
 importFileInput.addEventListener('change', importFromJsonFile);
 categoriesSelect.addEventListener('change', (event) => categoryFilter(event.target.value));
-
+populateCategories();
 displayQuotes();
 populateCategories();
