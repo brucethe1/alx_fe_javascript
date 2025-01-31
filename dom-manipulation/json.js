@@ -7,11 +7,16 @@ const quotes = JSON.parse(localStorage.getItem('quotes')) || [];
 
 function displayQuotes() {
     quoteContainer.innerHTML = '';
-    quotes.forEach((quote, index) => {
+    // Using map to transform quotes before displaying them
+    const quoteElements = quotes.map((quote, index) => {
         const quoteElement = document.createElement('p');
-        quoteElement.textContent = quote;
-        quoteContainer.appendChild(quoteElement);
+        quoteElement.textContent = quote.text || quote; // Assuming each quote has a 'text' property or is just a string
+        return quoteElement;
     });
+
+    // Append all quote elements
+    quoteElements.forEach(quoteElement => quoteContainer.appendChild(quoteElement));
+
     sessionStorage.setItem('lastViewedQuote', quotes[quotes.length - 1] || '');
 }
 
@@ -27,14 +32,15 @@ function populateCategories() {
 }
 
 function categoryFilter(selectedCategory) {
-    // Filter quotes based on the selected category (assuming each quote is an object with category property)
+    // Filter quotes based on the selected category using map
     const filteredQuotes = quotes.filter(quote => quote.category === selectedCategory);
     quoteContainer.innerHTML = '';
-    filteredQuotes.forEach(quote => {
+    const quoteElements = filteredQuotes.map(quote => {
         const quoteElement = document.createElement('p');
         quoteElement.textContent = quote.text;
-        quoteContainer.appendChild(quoteElement);
+        return quoteElement;
     });
+    quoteElements.forEach(quoteElement => quoteContainer.appendChild(quoteElement));
 }
 
 function addQuote() {
@@ -84,6 +90,6 @@ addQuoteBtn.addEventListener('click', addQuote);
 exportBtn.addEventListener('click', exportQuotes);
 importFileInput.addEventListener('change', importFromJsonFile);
 categoriesSelect.addEventListener('change', (event) => categoryFilter(event.target.value));
-populateCategories();
+
 displayQuotes();
 populateCategories();
