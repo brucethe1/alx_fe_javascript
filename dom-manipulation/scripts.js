@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     
-    function saveQuotes() {
+    function localStoragesetItem() {
             
  const quotes = ["Believe in yourself.", "Stay focused.", "Never give up."];
 localStorage.setItem("quotes", JSON.stringify(quotes));
