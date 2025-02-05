@@ -183,7 +183,7 @@ function initializeLocalData() {
     updateQuotesDisplay();
   }
 }
-
+fetchQuotesFromServer()
 initializeLocalData();
 
 // ---------------------------------------------------------------------
