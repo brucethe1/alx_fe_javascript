@@ -4,14 +4,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const quoteList = document.getElementById("quoteList");
     const exportBtn = document.getElementById("exportBtn");
     const importFile = document.getElementById("importFile");
-    
- const quotes = ["Believe in yourself.", "Stay focused.", "Never give up."];
-localStorage.setItem("quotes", JSON.stringify(quotes));
-console.log("Quotes saved to localStorage!");
+
 
     
     function saveQuotes() {
-        localStorage.setItem("quotes", JSON.stringify(quotes));
+            
+ const quotes = ["Believe in yourself.", "Stay focused.", "Never give up."];
+localStorage.setItem("quotes", JSON.stringify(quotes));
+console.log("Quotes saved to localStorage!");
+        
+       
     }
     
     function renderQuotes() {
