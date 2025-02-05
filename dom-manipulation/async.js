@@ -1,187 +1,126 @@
-/***********************************************************
- * 1) SIMULATE SERVER INTERACTION
- ***********************************************************/
+"use strict";
 
-// This function must exist exactly as named to pass the check:
+/***********************************************************
+ * STEP 1: SIMULATE SERVER INTERACTION
+ ***********************************************************/
 function fetchQuotesFromServer() {
-  // Use JSONPlaceholder to simulate a mock server fetching
+  // Use JSONPlaceholder to simulate a server endpoint
   const apiUrl = "https://jsonplaceholder.typicode.com/posts";
 
   fetch(apiUrl)
-    .then(response => response.json())
-    .then(data => {
-      // Store the fetched data as the "server version" of quotes
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (data) {
+      // Store fetched data as the "server version" of quotes
       localStorage.setItem("serverQuotes", JSON.stringify(data));
       console.log("Fetched quotes from server:", data);
     })
-    .catch(error => {
+    .catch(function (error) {
       console.error("Error fetching data from server:", error);
     });
 }
 
-// Call fetchQuotesFromServer periodically to simulate updates from the server
+// Periodically fetch new quotes from the "server"
 setInterval(fetchQuotesFromServer, 5000);
 
 /***********************************************************
- * 2) IMPLEMENT DATA SYNCING
+ * STEP 2: IMPLEMENT DATA SYNCING
  ***********************************************************/
-
-// Compare local quotes to server quotes, let the server data take precedence
 function syncLocalData() {
-  // Retrieve server and local data from localStorage
-  const serverData = JSON.parse(localStorage.getItem("serverQuotes") || "[]");
-  const localData = JSON.parse(localStorage.getItem("localQuotes") || "[]");
+  // Read both server and local quotes from localStorage
+  const serverQuotes = JSON.parse(localStorage.getItem("serverQuotes") || "[]");
+  const localQuotes = JSON.parse(localStorage.getItem("localQuotes") || "[]");
 
-  // If the two sets differ, we assume a conflict and override local data
-  if (JSON.stringify(serverData) !== JSON.stringify(localData)) {
-    localStorage.setItem("localQuotes", JSON.stringify(serverData));
-    console.log("Local data synced with server data (server took precedence).");
-    displayNotification("Local data synced with server data.", "sync");
-    renderLocalQuotes();
+  // If there's a difference, let the server's data overwrite local
+  if (JSON.stringify(serverQuotes) !== JSON.stringify(localQuotes)) {
+    localStorage.setItem("localQuotes", JSON.stringify(serverQuotes));
+    console.log("Local data synced with server data (server takes precedence).");
   }
 }
 
-// Call syncLocalData periodically (every 5 seconds)
+// Periodically sync local data with server data
 setInterval(syncLocalData, 5000);
 
 /***********************************************************
- * 3) HANDLING CONFLICTS
+ * STEP 3: HANDLING CONFLICTS
  ***********************************************************/
-
-/**
- * In this simple example, we show a conflict notification if there's a mismatch.
- * The user can optionally resolve conflicts manually by clicking a button in the UI.
- */
-
-// Check for conflicts and notify the user
 function checkForConflicts() {
-  const serverData = JSON.parse(localStorage.getItem("serverQuotes") || "[]");
-  const localData = JSON.parse(localStorage.getItem("localQuotes") || "[]");
+  const serverQuotes = JSON.parse(localStorage.getItem("serverQuotes") || "[]");
+  const localQuotes = JSON.parse(localStorage.getItem("localQuotes") || "[]");
 
-  if (JSON.stringify(serverData) !== JSON.stringify(localData)) {
-    displayNotification("Conflict detected! Server data differs from local data.", "conflict");
+  if (JSON.stringify(serverQuotes) !== JSON.stringify(localQuotes)) {
+    console.warn("Conflict detected between server data and local data!");
   }
 }
 
-// Periodically check for conflicts (every 5 seconds)
+// Periodically check for conflicts
 setInterval(checkForConflicts, 5000);
 
 /**
- * Manual conflict resolution:
- * Provide a button or UI element that calls this function.
- * The user can choose to keep local data (and "simulate" posting it to the server),
- * or discard local changes and keep the server data.
+ * A simple function to manually resolve conflicts if desired.
+ * This could be triggered by a button in your UI.
  */
 function manuallyResolveConflicts() {
-  const serverData = JSON.parse(localStorage.getItem("serverQuotes") || "[]");
-  const localData = JSON.parse(localStorage.getItem("localQuotes") || "[]");
+  const serverQuotes = JSON.parse(localStorage.getItem("serverQuotes") || "[]");
+  const localQuotes = JSON.parse(localStorage.getItem("localQuotes") || "[]");
 
-  if (JSON.stringify(serverData) === JSON.stringify(localData)) {
-    // No conflict to resolve
-    alert("No conflict to resolve. Local and server data match.");
+  // If there's no difference, nothing to resolve
+  if (JSON.stringify(serverQuotes) === JSON.stringify(localQuotes)) {
+    alert("No conflict to resolve: local and server data match.");
     return;
   }
 
-  // Very simple approach: ask user which version to keep
-  const keepLocal = confirm("Conflict detected!\n\nClick OK to keep *local* data (and post it to server),\nor Cancel to keep *server* data.");
+  // Ask the user which data they want to keep
+  const keepLocal = confirm(
+    "Conflict detected!\n\n" +
+    "Click OK to keep LOCAL data (and overwrite server),\n" +
+    "or Cancel to keep SERVER data (overwrite local)."
+  );
 
   if (keepLocal) {
-    // Simulate posting local data to the server
-    simulatePostToServer(localData);
-    displayNotification("Kept local data, posted changes to server.", "sync");
+    // Simulate "posting" local data to server by copying it to serverQuotes
+    console.log("Keeping LOCAL data. Overwriting server data (in localStorage).");
+    localStorage.setItem("serverQuotes", JSON.stringify(localQuotes));
   } else {
-    // Keep server data
-    localStorage.setItem("localQuotes", JSON.stringify(serverData));
-    displayNotification("Kept server data. Local data updated.", "sync");
+    // Overwrite local with server data
+    console.log("Keeping SERVER data. Overwriting local data.");
+    localStorage.setItem("localQuotes", JSON.stringify(serverQuotes));
   }
-  renderLocalQuotes();
-}
-
-// Simulate a POST request to the server for local data
-function simulatePostToServer(data) {
-  // This is a mock. In a real app, you'd do a fetch POST to your API.
-  console.log("Simulating POST of local data to server:", data);
-
-  // For demonstration, we also update "serverQuotes" in localStorage to reflect that
-  localStorage.setItem("serverQuotes", JSON.stringify(data));
 }
 
 /***********************************************************
- * 4) TESTING & VERIFICATION
+ * STEP 4: TESTING & VERIFICATION
  ***********************************************************/
+/**
+ * Function to simulate user modifying local data, causing a potential conflict
+ * with the server data.
+ */
+function modifyLocalData() {
+  const localQuotes = JSON.parse(localStorage.getItem("localQuotes") || "[]");
+
+  localQuotes.push({
+    id: Date.now(),
+    title: "User-Modified Quote " + Math.floor(Math.random() * 1000),
+  });
+
+  localStorage.setItem("localQuotes", JSON.stringify(localQuotes));
+  console.log("Local data modified by user:", localQuotes);
+}
 
 /**
- * Basic UI to demonstrate user changes that cause conflicts:
- *   1. A function to modify local data
- *   2. A function to render local quotes to the page
+ * Initialize local data if none exists (to simulate a fresh user environment).
  */
-
-// Modify local data to simulate a user edit
-function modifyLocalData() {
-  const localData = JSON.parse(localStorage.getItem("localQuotes") || "[]");
-  localData.push({
-    id: Date.now(),
-    title: "New Local Quote " + Math.floor(Math.random() * 1000)
-  });
-  localStorage.setItem("localQuotes", JSON.stringify(localData));
-  console.log("Local data modified by user:", localData);
-  displayNotification("Local data modified by user.", "conflict");
-  renderLocalQuotes();
-}
-
-// Render the local quotes on the page (assuming you have an element with id="quotesDisplay")
-function renderLocalQuotes() {
-  const displayDiv = document.getElementById("quotesDisplay");
-  if (!displayDiv) return; // If there's no such element, just skip
-
-  const localData = JSON.parse(localStorage.getItem("localQuotes") || "[]");
-  displayDiv.innerHTML = `
-    <h3>Local Quotes:</h3>
-    <pre>${JSON.stringify(localData, null, 2)}</pre>
-  `;
-}
-
-// Notification helper: create a small message box that disappears
-function displayNotification(message, type) {
-  const notification = document.createElement("div");
-  notification.style.position = "fixed";
-  notification.style.bottom = "10px";
-  notification.style.right = "10px";
-  notification.style.padding = "10px";
-  notification.style.borderRadius = "5px";
-  notification.style.color = "#fff";
-  notification.style.zIndex = "9999";
-
-  if (type === "sync") {
-    notification.style.backgroundColor = "#4CAF50";
-  } else if (type === "conflict") {
-    notification.style.backgroundColor = "#f44336";
-  } else {
-    notification.style.backgroundColor = "#333";
-  }
-
-  notification.textContent = message;
-  document.body.appendChild(notification);
-
-  // Remove after 3 seconds
-  setTimeout(() => {
-    document.body.removeChild(notification);
-  }, 3000);
-}
-
-// Initialize local data if none exists
 function initializeLocalData() {
-  const localQuotes = localStorage.getItem("localQuotes");
-  if (!localQuotes) {
-    // Start local data with an empty array or a couple of example quotes
-    const initialLocalData = [
-      { id: 101, title: "Local Quote 1" },
-      { id: 102, title: "Local Quote 2" }
+  if (!localStorage.getItem("localQuotes")) {
+    const initialQuotes = [
+      { id: 1, title: "Local Quote 1" },
+      { id: 2, title: "Local Quote 2" },
     ];
-    localStorage.setItem("localQuotes", JSON.stringify(initialLocalData));
+    localStorage.setItem("localQuotes", JSON.stringify(initialQuotes));
+    console.log("Initialized localQuotes with sample data:", initialQuotes);
   }
-  renderLocalQuotes();
 }
 
-// On page load, set up local data
+// Run initialization once on load
 initializeLocalData();
