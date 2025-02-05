@@ -13,50 +13,58 @@ const fetchQuotesFromServer = async () => {
   }
 };
 
-// Sync local data with server data
-const syncLocalData = async () => {
-  const serverQuotes = await fetchQuotesFromServer();
-  const localQuotes = JSON.parse(localStorage.getItem('quotes')) || [];
-
-  const mergedQuotes = serverQuotes.reduce((acc, serverQuote) => {
-    const localQuote = localQuotes.find((q) => q.id === serverQuote.id);
-    if (localQuote && localQuote.updatedAt > serverQuote.updatedAt) {
-      // Keep local quote if it was updated more recently
-      acc.push(localQuote);
-    } else {
-      // Otherwise, use server quote
-      acc.push(serverQuote);
+// Post a quote to the server
+const postQuoteToServer = async (quote) => {
+  try {
+    const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(quote),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to post quote to the server');
     }
-    return acc;
-  }, []);
-
-  // Save merged data to local storage
-  localStorage.setItem('quotes', JSON.stringify(mergedQuotes));
-
-  // Notify user of updates
-  notifyUser('Quotes have been updated from the server.');
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error posting quote:', error);
+    return null;
+  }
 };
 
-// Notify user of updates
-const notifyUser = (message) => {
-  const notification = document.createElement('div');
-  notification.innerText = message;
-  notification.style.position = 'fixed';
-  notification.style.bottom = '20px';
-  notification.style.right = '20px';
-  notification.style.backgroundColor = '#4CAF50';
-  notification.style.color = 'white';
-  notification.style.padding = '10px';
-  notification.style.borderRadius = '5px';
-  document.body.appendChild(notification);
+// Display quotes in the UI
+const displayQuotes = (quotes) => {
+  const quotesContainer = document.getElementById('quotes-container');
+  quotesContainer.innerHTML = ''; // Clear previous content
 
-  setTimeout(() => {
-    document.body.removeChild(notification);
-  }, 5000); // Remove notification after 5 seconds
+  quotes.forEach((quote) => {
+    const quoteElement = document.createElement('div');
+    quoteElement.className = 'quote';
+    quoteElement.innerHTML = `<p>${quote.title}</p>`;
+    quotesContainer.appendChild(quoteElement);
+  });
 };
 
-// Periodically fetch and sync data
-setInterval(syncLocalData, 10000); // Sync every 10 seconds
+// Load and display quotes
+const loadQuotes = async () => {
+  const quotes = await fetchQuotesFromServer();
+  displayQuotes(quotes);
+};
 
-// Initial sync when the page loads
-syncLocalData();
+// Example: Post a new quote
+const newQuote = {
+  title: 'This is a new quote',
+  body: 'This is the content of the new quote',
+  userId: 1,
+};
+
+postQuoteToServer(newQuote).then((result) => {
+  if (result) {
+    console.log('Quote posted successfully:', result);
+  }
+});
+
+// Load quotes when the page loads
+loadQuotes();
