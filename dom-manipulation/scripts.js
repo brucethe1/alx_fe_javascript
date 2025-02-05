@@ -37,7 +37,7 @@ console.log("Quotes saved to localStorage!");
         const quote = quoteInput.value.trim();
         if (quote) {
             quotes.push(quote);
-            saveQuotes();
+            localStoragesetItem() 
             renderQuotes();
             quoteInput.value = "";
         }
@@ -62,7 +62,7 @@ console.log("Quotes saved to localStorage!");
                 const importedQuotes = JSON.parse(event.target.result);
                 if (Array.isArray(importedQuotes)) {
                     quotes.push(...importedQuotes);
-                    saveQuotes();
+                   localStoragesetItem() 
                     renderQuotes();
                     alert("Quotes imported successfully!");
                 } else {
