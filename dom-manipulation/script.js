@@ -10,7 +10,6 @@ function saveQuotes() {
     localStorage.setItem("quotes", JSON.stringify(quotes));
 }
 
-// Function to generate and display a new quote based on filter
 function generateQuote() {
     const selectedCategory = document.getElementById("categoryFilter").value;
     const filteredQuotes = selectedCategory === "all" 
@@ -18,9 +17,19 @@ function generateQuote() {
         : quotes.filter(quote => quote.category === selectedCategory);
 
     if (filteredQuotes.length === 0) {
-        document.getElementById("quoteDisplay").innerText = "No quotes in this category.";
+        document.getElementById("quoteDisplay").textContent = "No quotes in this category.";
         return;
     }
+
+    const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
+    const selectedQuote = filteredQuotes[randomIndex];
+
+    // Display quote using textContent
+    document.getElementById("quoteDisplay").textContent = selectedQuote.text;
+
+    // Store the last viewed quote in session storage
+    sessionStorage.setItem("lastQuote", selectedQuote.text);
+}
 
     const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
     const selectedQuote = filteredQuotes[randomIndex];
