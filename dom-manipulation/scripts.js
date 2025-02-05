@@ -1,90 +1,78 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const quoteInput = document.getElementById("quoteInput");
-    const addQuoteBtn = document.getElementById("addQuoteBtn");
-    const quoteList = document.getElementById("quoteList");
-    const exportBtn = document.getElementById("exportBtn");
-    const importFile = document.getElementById("importFile");
+// Load quotes from localStorage or start with default
+let quotes = JSON.parse(localStorage.getItem("quotes")) || [
+    "Believe in yourself.",
+    "Stay positive and happy.",
+    "Work hard and don’t give up hope."
+];
 
+// Function to save quotes to local storage
+function saveQuotes() {
+    localStorage.setItem("quotes", JSON.stringify(quotes));
+}
 
-    
-    function localStoragesetItem() {
-            
- const quotes = ["Believe in yourself.", "Stay focused.", "Never give up."];
-localStorage.setItem("quotes", JSON.stringify(quotes));
-console.log("Quotes saved to localStorage!");
-        
-       
+// Function to generate and display a new quote
+function generateQuote() {
+    if (quotes.length === 0) {
+        document.getElementById("quoteDisplay").innerText = "No quotes available.";
+        return;
     }
-    
-    function renderQuotes() {
-        quoteList.innerHTML = "";
-        quotes.forEach((quote, index) => {
-            const li = document.createElement("li");
-            li.textContent = quote;
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "Delete";
-            deleteBtn.onclick = () => {
-                quotes.splice(index, 1);
-                saveQuotes();
-                renderQuotes();
-            };
-            li.appendChild(deleteBtn);
-            quoteList.appendChild(li);
-        });
+    const randomIndex = Math.floor(Math.random() * quotes.length);
+    const selectedQuote = quotes[randomIndex];
+
+    // Display quote
+    document.getElementById("quoteDisplay").innerText = selectedQuote;
+
+    // Store the last viewed quote in session storage
+    sessionStorage.setItem("lastQuote", selectedQuote);
+}
+
+// Function to add a new quote
+function addQuote() {
+    const newQuote = document.getElementById("newQuoteInput").value.trim();
+    if (newQuote === "") {
+        alert("Please enter a valid quote!");
+        return;
     }
-    
-    addQuoteBtn.addEventListener("click", () => {
-        const quote = quoteInput.value.trim();
-        if (quote) {
-            quotes.push(quote);
-            localStoragesetItem() 
-            renderQuotes();
-            quoteInput.value = "";
+
+    quotes.push(newQuote);
+    saveQuotes(); // Save to local storage
+    document.getElementById("newQuoteInput").value = ""; // Clear input
+    alert("Quote added successfully!");
+}
+
+// Function to export quotes as a JSON file
+function exportQuotes() {
+    const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "quotes.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+// Function to import quotes from a JSON file
+function importFromJsonFile(event) {
+    const fileReader = new FileReader();
+    fileReader.onload = function(event) {
+        try {
+            const importedQuotes = JSON.parse(event.target.result);
+            if (!Array.isArray(importedQuotes)) throw new Error("Invalid format");
+
+            quotes.push(...importedQuotes);
+            saveQuotes();
+            alert("Quotes imported successfully!");
+        } catch (error) {
+            alert("Invalid JSON file. Please upload a valid quotes file.");
         }
-    });
-    
-    exportBtn.addEventListener("click", () => {
-        const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "quotes.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    });
-    
-    importFile.addEventListener("change", (event) => {
-        const fileReader = new FileReader();
-        fileReader.onload = function(event) {
-            try {
-                const importedQuotes = JSON.parse(event.target.result);
-                if (Array.isArray(importedQuotes)) {
-                    quotes.push(...importedQuotes);
-                   localStoragesetItem() 
-                    renderQuotes();
-                    alert("Quotes imported successfully!");
-                } else {
-                    alert("Invalid JSON format");
-                }
-            } catch (error) {
-                alert("Error reading file");
-            }
-        };
-        fileReader.readAsText(event.target.files[0]);
-    });
-    
-    // Store last viewed quote in session storage
-    if (sessionStorage.getItem("lastViewedQuote")) {
-        alert("Last viewed quote: " + sessionStorage.getItem("lastViewedQuote"));
+    };
+    fileReader.readAsText(event.target.files[0]);
+}
+
+// Load the last viewed quote from session storage when the page loads
+window.onload = function() {
+    const lastQuote = sessionStorage.getItem("lastQuote");
+    if (lastQuote) {
+        document.getElementById("quoteDisplay").innerText = lastQuote;
     }
-    
-    quoteList.addEventListener("click", (event) => {
-        if (event.target.tagName === "LI") {
-            sessionStorage.setItem("lastViewedQuote", event.target.textContent);
-        }
-    });
-    
-    renderQuotes();
-});
+};
