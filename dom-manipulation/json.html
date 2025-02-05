@@ -1,85 +1,37 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const quoteInput = document.getElementById("quoteInput");
-    const addQuoteBtn = document.getElementById("addQuoteBtn");
-    const quoteList = document.getElementById("quoteList");
-    const exportBtn = document.getElementById("exportBtn");
-    const importFile = document.getElementById("importFile");
-    
-    let quotes = JSON.parse(localStorage.getItem("quotes")) || [];
-    
-    function saveQuotes() {
-        localStorage.setItem("quotes", JSON.stringify(quotes));
-    }
-    
-    function renderQuotes() {
-        quoteList.innerHTML = "";
-        quotes.forEach((quote, index) => {
-            const li = document.createElement("li");
-            li.textContent = quote;
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "Delete";
-            deleteBtn.onclick = () => {
-                quotes.splice(index, 1);
-                saveQuotes();
-                renderQuotes();
-            };
-            li.appendChild(deleteBtn);
-            quoteList.appendChild(li);
-        });
-    }
-    
-    addQuoteBtn.addEventListener("click", () => {
-        const quote = quoteInput.value.trim();
-        if (quote) {
-            quotes.push(quote);
-            saveQuotes();
-            renderQuotes();
-            quoteInput.value = "";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Quote Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
         }
-    });
-    
-    exportBtn.addEventListener("click", () => {
-        const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "quotes.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    });
-    
-    importFile.addEventListener("change", (event) => {
-        const fileReader = new FileReader();
-        fileReader.onload = function(event) {
-            try {
-                const importedQuotes = JSON.parse(event.target.result);
-                if (Array.isArray(importedQuotes)) {
-                    quotes.push(...importedQuotes);
-                    saveQuotes();
-                    renderQuotes();
-                    alert("Quotes imported successfully!");
-                } else {
-                    alert("Invalid JSON format");
-                }
-            } catch (error) {
-                alert("Error reading file");
-            }
-        };
-        fileReader.readAsText(event.target.files[0]);
-    });
-    
-    // Store last viewed quote in session storage
-    if (sessionStorage.getItem("lastViewedQuote")) {
-        alert("Last viewed quote: " + sessionStorage.getItem("lastViewedQuote"));
-    }
-    
-    quoteList.addEventListener("click", (event) => {
-        if (event.target.tagName === "LI") {
-            sessionStorage.setItem("lastViewedQuote", event.target.textContent);
+        button {
+            margin: 10px;
+            padding: 10px;
+            cursor: pointer;
         }
-    });
+    </style>
+</head>
+<body>
+
+    <h1>Dynamic Quote Generator</h1>
+    <p id="quoteDisplay">Click "New Quote" to get started.</p>
     
-    renderQuotes();
-});
+    <button onclick="generateQuote()">New Quote</button>
+    <button onclick="exportQuotes()">Export Quotes</button>
+    <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
+    
+    <h2>Add a New Quote</h2>
+    <input type="text" id="newQuoteInput" placeholder="Enter a quote">
+    <button onclick="addQuote()">Add Quote</button>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
+
