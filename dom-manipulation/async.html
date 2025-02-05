@@ -42,8 +42,8 @@
     const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Mock API for server interaction
     const localStorageKey = 'quotes';
 
-    // Simulating fetching quote data from the server
-    function fetchFromServer() {
+    // Fetching quote data from the server
+    function fetchQuotesFromServer() {
       return fetch(apiUrl)
         .then(response => response.json())
         .then(data => data[0].title); // Just using the first post as a quote
@@ -51,7 +51,7 @@
 
     // Simulate periodic syncing with the server
     function syncDataWithServer() {
-      fetchFromServer()
+      fetchQuotesFromServer()
         .then(serverQuote => {
           const localQuote = localStorage.getItem(localStorageKey);
 
@@ -95,7 +95,7 @@
       if (storedQuote) {
         displayQuote(storedQuote);
       } else {
-        fetchFromServer().then(quote => {
+        fetchQuotesFromServer().then(quote => {
           localStorage.setItem(localStorageKey, quote);
           displayQuote(quote);
         });
