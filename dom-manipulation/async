@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Quote Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #quoteContainer {
+      width: 60%;
+      text-align: center;
+    }
+    #quote {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    #conflictMessage {
+      color: red;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="quoteContainer">
+    <div id="quote">Loading quote...</div>
+    <button onclick="generateQuote()">Generate New Quote</button>
+    <div id="conflictMessage"></div>
+  </div>
+
+  <script>
+    const apiUrl = 'https://jsonplaceholder.typicode.com/posts'; // Mock API for server interaction
+    const localStorageKey = 'quotes';
+
+    // Simulating fetching quote data from the server
+    function fetchFromServer() {
+      return fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => data[0].title); // Just using the first post as a quote
+    }
+
+    // Simulate periodic syncing with the server
+    function syncDataWithServer() {
+      fetchFromServer()
+        .then(serverQuote => {
+          const localQuote = localStorage.getItem(localStorageKey);
+
+          if (localQuote && localQuote !== serverQuote) {
+            // Conflict detected
+            handleConflict(serverQuote, localQuote);
+          } else {
+            // No conflict, update or initialize
+            localStorage.setItem(localStorageKey, serverQuote);
+            displayQuote(serverQuote);
+          }
+        });
+    }
+
+    // Handling conflicts
+    function handleConflict(serverQuote, localQuote) {
+      document.getElementById('conflictMessage').innerHTML = `
+        Conflict detected! Server quote: "${serverQuote}" has been applied. 
+        <br>Local quote: "${localQuote}" was overridden.
+      `;
+      localStorage.setItem(localStorageKey, serverQuote); // Resolving by using server's data
+      displayQuote(serverQuote);
+    }
+
+    // Display quote to the user
+    function displayQuote(quote) {
+      document.getElementById('quote').textContent = quote;
+    }
+
+    // Simulate generating a new quote
+    function generateQuote() {
+      const newQuote = `New Quote ${Math.floor(Math.random() * 100)}`;
+      localStorage.setItem(localStorageKey, newQuote);
+      displayQuote(newQuote);
+      document.getElementById('conflictMessage').innerHTML = ''; // Clear conflict message if any
+    }
+
+    // Initializing and periodic sync
+    function init() {
+      const storedQuote = localStorage.getItem(localStorageKey);
+      if (storedQuote) {
+        displayQuote(storedQuote);
+      } else {
+        fetchFromServer().then(quote => {
+          localStorage.setItem(localStorageKey, quote);
+          displayQuote(quote);
+        });
+      }
+
+      // Periodically sync with server every 30 seconds
+      setInterval(syncDataWithServer, 30000); // every 30 seconds
+    }
+
+    // Start app
+    init();
+  </script>
+</body>
+</html>
