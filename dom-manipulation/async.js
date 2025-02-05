@@ -1,12 +1,12 @@
 // Simulated API URL
 const apiUrl = "https://jsonplaceholder.typicode.com/posts";
 
-// Fetching data from the server (mock API)
-function fetchServerData() {
+// Function to fetch quotes from the server (mock API)
+function fetchQuotesFromServer() {
   fetch(apiUrl)
     .then((response) => response.json())
     .then((data) => {
-      // Store server data in localStorage
+      // Store the fetched data in localStorage
       localStorage.setItem('quotes', JSON.stringify(data));
       console.log("Fetched server data", data);
     })
@@ -14,7 +14,7 @@ function fetchServerData() {
 }
 
 // Periodically fetch server data (every 5 seconds)
-setInterval(fetchServerData, 5000);
+setInterval(fetchQuotesFromServer, 5000);
 
 // Function to sync local data with the server data
 function syncLocalData() {
@@ -95,4 +95,3 @@ function initializeLocalData() {
 if (!localStorage.getItem('localQuotes')) {
   initializeLocalData();
 }
-
