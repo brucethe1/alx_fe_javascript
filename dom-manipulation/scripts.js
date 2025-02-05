@@ -5,7 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const exportBtn = document.getElementById("exportBtn");
     const importFile = document.getElementById("importFile");
     
-    let quotes = JSON.parse(localStorage.getItem("quotes")) || [];
+ const quotes = ["Believe in yourself.", "Stay focused.", "Never give up."];
+localStorage.setItem("quotes", JSON.stringify(quotes));
+console.log("Quotes saved to localStorage!");
+
     
     function saveQuotes() {
         localStorage.setItem("quotes", JSON.stringify(quotes));
