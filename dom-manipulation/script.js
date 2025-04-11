@@ -21,7 +21,58 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listener for export button
     document.getElementById('exportBtn').addEventListener('click', exportQuotes);
+    
+    // Add event listener for import button
+    document.getElementById('importBtn').addEventListener('click', function() {
+        document.getElementById('fileInput').click();
+    });
+
+    // Add file input change handler
+    document.getElementById('fileInput').addEventListener('change', handleFileImport);
 });
+
+// Function to handle file import
+function handleFileImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Create new FileReader instance
+    const reader = new FileReader();
+    
+    // Set up onload event handler
+    reader.onload = function(e) {
+        try {
+            const importedQuotes = JSON.parse(e.target.result);
+            if (Array.isArray(importedQuotes) && importedQuotes.every(isValidQuote)) {
+                quotes = importedQuotes;
+                localStorage.setItem('quotes', JSON.stringify(quotes));
+                populateCategories();
+                filterQuotes();
+                alert('Quotes imported successfully!');
+            } else {
+                alert('Invalid file format. Please import a valid JSON array of quotes with text, author, and category fields.');
+            }
+        } catch (error) {
+            alert('Error parsing file: ' + error.message);
+        }
+    };
+    
+    // Set up onerror event handler
+    reader.onerror = function() {
+        alert('Error reading file');
+    };
+    
+    // Read the file as text
+    reader.readAsText(file);
+}
+
+// Helper function to validate quote structure
+function isValidQuote(quote) {
+    return quote && 
+           typeof quote.text === 'string' && 
+           typeof quote.author === 'string' && 
+           typeof quote.category === 'string';
+}
 
 // Function to populate categories dropdown
 function populateCategories() {
