@@ -1,14 +1,54 @@
- <!DOCTYPE html>
-  <html lang="en">
-  <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Quote Generator</title>
-  </head>
-  <body>
+    <title>Dynamic Quote Generator with Filtering</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .quote-container {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 5px solid #007bff;
+            background-color: #f8f9fa;
+        }
+        .category-filter {
+            margin: 20px 0;
+            padding: 10px;
+            width: 100%;
+        }
+        .add-quote-form {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
     <h1>Dynamic Quote Generator</h1>
-    <div id="quoteDisplay"></div>
-    <button id="newQuote">Show New Quote</button>
+    
+    <select id="categoryFilter" class="category-filter">
+        <option value="all">All Categories</option>
+        <!-- Categories will be populated dynamically -->
+    </select>
+    
+    <div id="quotesContainer">
+        <!-- Quotes will be displayed here -->
+    </div>
+    
+    <div class="add-quote-form">
+        <h2>Add New Quote</h2>
+        <input type="text" id="newQuoteText" placeholder="Quote text" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <input type="text" id="newQuoteAuthor" placeholder="Author" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <input type="text" id="newQuoteCategory" placeholder="Category" style="width: 100%; padding: 8px; margin-bottom: 10px;">
+        <button onclick="addQuote()">Add Quote</button>
+    </div>
+
     <script src="script.js"></script>
-  </body>
-  </html>
+</body>
+</html>
