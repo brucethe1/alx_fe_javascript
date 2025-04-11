@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadFromLocalStorage();
   renderQuotes();
   showLastSyncTime();
-  await syncWithServer();
-  setInterval(syncWithServer, SYNC_INTERVAL);
+  await syncQuotes();
+  setInterval(syncQuotes, SYNC_INTERVAL);
 });
 
 // Load from local storage
@@ -48,7 +48,7 @@ function renderQuotes() {
   });
 }
 
-// Fetch quotes from server
+// Fetch from server
 async function fetchQuotesFromServer() {
   const res = await fetch(API_URL);
   const data = await res.json();
@@ -63,14 +63,13 @@ async function fetchQuotesFromServer() {
   }));
 }
 
-// Post quote to server
+// Post new quote to server
 async function postQuoteToServer(quote) {
   try {
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         title: quote.text,
@@ -78,14 +77,10 @@ async function postQuoteToServer(quote) {
         userId: 1
       })
     });
-
-    if (!res.ok) throw new Error('Failed to post quote');
-
     const data = await res.json();
-    console.log('Posted quote:', data);
+    console.log('Posted:', data);
   } catch (err) {
     console.error('Post failed:', err);
-    showStatus('Post failed: ' + err.message, 'error');
   }
 }
 
@@ -102,51 +97,7 @@ function mergeQuotes(local, server) {
   return merged;
 }
 
-// New syncQuotes function
-async function syncQuotes() {
-  // POST unsynced quotes
-  for (const quote of quotes) {
-    if (!quote.synced) {
-      await postQuoteToServer(quote);
-      quote.synced = true;
-    }
-  }
-
-  // Fetch from server and merge
-  const serverQuotes = await fetchQuotesFromServer();
-  const newQuotes = mergeQuotes(quotes, serverQuotes);
-
-  if (newQuotes.length > quotes.length) {
-    quotes = newQuotes;
-    saveToLocalStorage();
-    renderQuotes();
-    showStatus('Synced with server', 'success');
-  } else {
-    showStatus('Already up to date', 'info');
-  }
-
-  lastSyncTime = Date.now();
-  saveToLocalStorage();
-  showLastSyncTime();
-}
-
-// Sync wrapper
-async function syncWithServer() {
-  try {
-    if (!navigator.onLine) {
-      isOffline = true;
-      showStatus('Offline: Using local data', 'warning');
-      return;
-    }
-
-    await syncQuotes();
-  } catch (err) {
-    console.error('Sync failed:', err);
-    showStatus('Sync failed: ' + err.message, 'error');
-  }
-}
-
-// Status display
+// Show status message
 function showStatus(message, type = 'info') {
   const notif = document.createElement('div');
   notif.className = `status ${type}`;
@@ -156,4 +107,44 @@ function showStatus(message, type = 'info') {
   setTimeout(() => {
     notif.remove();
   }, 3000);
+}
+
+// Sync quotes (POST unsynced, fetch new, merge, alert)
+async function syncQuotes() {
+  try {
+    if (!navigator.onLine) {
+      isOffline = true;
+      showStatus('Offline: Using local data', 'warning');
+      return;
+    }
+
+    // Post unsynced quotes
+    for (const quote of quotes) {
+      if (!quote.synced) {
+        await postQuoteToServer(quote);
+        quote.synced = true;
+      }
+    }
+
+    // Fetch from server and merge
+    const serverQuotes = await fetchQuotesFromServer();
+    const newQuotes = mergeQuotes(quotes, serverQuotes);
+
+    if (newQuotes.length > quotes.length) {
+      quotes = newQuotes;
+      saveToLocalStorage();
+      renderQuotes();
+      alert("Quotes synced with server!"); // ✅ alert added
+      showStatus('Synced with server', 'success');
+    } else {
+      showStatus('Already up to date', 'info');
+    }
+
+    lastSyncTime = Date.now();
+    saveToLocalStorage();
+    showLastSyncTime();
+  } catch (err) {
+    console.error('Sync failed:', err);
+    showStatus('Sync failed: ' + err.message, 'error');
+  }
 }
