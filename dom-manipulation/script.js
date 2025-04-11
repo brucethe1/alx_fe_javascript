@@ -28,29 +28,24 @@ async function loadLocalData() {
 async function syncWithServer() {
     if (syncInProgress || offlineMode) return;
     syncInProgress = true;
-    
+
     try {
         showNotification('Starting synchronization...', 'info');
-        
-        // Simulate network check
+
         if (!await checkNetworkConnection()) {
             offlineMode = true;
             showNotification('Offline mode - working locally', 'warning');
             return;
         }
-        
-        // Get server data
-        const serverQuotes = await fetchServerQuotes();
-        
-        // Merge changes
+
+        const serverQuotes = await fetchQuotesFromServer();
+
         const mergeResult = mergeQuotes(quotes, serverQuotes);
-        
-        // Handle conflicts if any
+
         if (mergeResult.conflicts.length > 0) {
             await handleConflicts(mergeResult.conflicts);
         }
-        
-        // Update local data if changes occurred
+
         if (mergeResult.updated) {
             quotes = mergeResult.mergedQuotes;
             await saveLocalData();
@@ -60,7 +55,7 @@ async function syncWithServer() {
         } else {
             showNotification('Data is up to date', 'info');
         }
-        
+
         lastSyncTime = Date.now();
         updateLastSyncDisplay();
     } catch (error) {
@@ -81,16 +76,16 @@ async function checkNetworkConnection() {
     }
 }
 
-async function fetchServerQuotes() {
+async function fetchQuotesFromServer() {
     try {
         const response = await fetch(`${API_BASE}${QUOTES_ENDPOINT}`);
         if (!response.ok) throw new Error('Server error');
-        
+
         const data = await response.json();
         return data.map(post => ({
             id: post.id,
             text: post.title,
-            author: 'Unknown', // JSONPlaceholder doesn't have author field
+            author: 'Unknown',
             category: 'General',
             version: 1,
             serverModified: true
@@ -108,14 +103,12 @@ function mergeQuotes(localQuotes, serverQuotes) {
 
     serverQuotes.forEach(serverQuote => {
         const localIndex = mergedQuotes.findIndex(q => q.id === serverQuote.id);
-        
+
         if (localIndex === -1) {
-            // New quote from server
             mergedQuotes.push(serverQuote);
             updated = true;
         } else {
             const localQuote = mergedQuotes[localIndex];
-            // Simple conflict resolution - server wins by default
             if (JSON.stringify(serverQuote) !== JSON.stringify(localQuote)) {
                 conflicts.push({
                     id: serverQuote.id,
@@ -135,9 +128,8 @@ function mergeQuotes(localQuotes, serverQuotes) {
 async function handleConflicts(conflicts) {
     return new Promise(resolve => {
         const dialog = createConflictDialog(conflicts);
-        
+
         dialog.querySelector('#resolveAllServer').addEventListener('click', () => {
-            // Accept all server versions
             conflicts.forEach(conflict => {
                 const index = quotes.findIndex(q => q.id === conflict.id);
                 if (index !== -1) quotes[index] = conflict.server;
@@ -146,16 +138,14 @@ async function handleConflicts(conflicts) {
             showNotification('All conflicts resolved (server versions kept)', 'success');
             resolve();
         });
-        
+
         dialog.querySelector('#resolveAllLocal').addEventListener('click', () => {
-            // Keep all local versions
             dialog.remove();
             showNotification('All conflicts resolved (local versions kept)', 'success');
             resolve();
         });
-        
+
         dialog.querySelector('#customResolve').addEventListener('click', () => {
-            // Implement custom per-conflict resolution here
             dialog.remove();
             showNotification('Custom conflict resolution not yet implemented', 'info');
             resolve();
@@ -212,7 +202,7 @@ function createConflictDialog(conflicts) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(dialog);
     return dialog;
 }
@@ -222,7 +212,7 @@ function showNotification(message, type) {
     notification.className = `notification ${type}`;
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.classList.add('fade-out');
         setTimeout(() => notification.remove(), 500);
@@ -232,7 +222,7 @@ function showNotification(message, type) {
 // Utility Functions
 function startSyncInterval() {
     setInterval(() => {
-        if (!document.hidden) { // Only sync when tab is active
+        if (!document.hidden) {
             syncWithServer();
         }
     }, SYNC_INTERVAL);
@@ -243,4 +233,30 @@ function saveLocalData() {
     localStorage.setItem('lastSync', lastSyncTime);
 }
 
-// [Include all your existing functions like populateCategories, filterQuotes, addQuote, etc.]
+// Placeholder for missing UI logic
+function populateCategories() {
+    // Dummy placeholder logic
+    console.log('Categories populated');
+}
+
+function filterQuotes() {
+    // Dummy placeholder logic
+    console.log('Quotes filtered');
+}
+
+function setupEventListeners() {
+    // Dummy placeholder logic
+    console.log('Event listeners set up');
+}
+
+function getDefaultQuotes() {
+    return [
+        {
+            id: 1,
+            text: "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+            author: "Winston Churchill",
+            category: "Inspiration",
+            version: 1
+        }
+    ];
+}
