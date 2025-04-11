@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('categoryFilter').value = lastFilter;
         filterQuotes();
     }
+
+    // Add event listener for export button
+    document.getElementById('exportBtn').addEventListener('click', exportQuotes);
 });
 
 // Function to populate categories dropdown
@@ -96,4 +99,33 @@ function addQuote() {
     document.getElementById('newQuoteText').value = '';
     document.getElementById('newQuoteAuthor').value = '';
     document.getElementById('newQuoteCategory').value = '';
+}
+
+// Function to export quotes as JSON file
+function exportQuotes() {
+    // Get current filtered quotes
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const quotesToExport = selectedCategory === 'all' 
+        ? quotes 
+        : quotes.filter(quote => quote.category === selectedCategory);
+    
+    // Create JSON string with proper formatting
+    const jsonString = JSON.stringify(quotesToExport, null, 2);
+    
+    // Create a Blob with the JSON data
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = selectedCategory === 'all' ? 'all_quotes.json' : `${selectedCategory}_quotes.json`;
+    
+    // Trigger download
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
