@@ -13,6 +13,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   showLastSyncTime();
   await syncWithServer();
   setInterval(syncWithServer, SYNC_INTERVAL);
+
+  // Form submission
+  const form = document.getElementById('quoteForm');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = document.getElementById('quoteText').value.trim();
+    const author = document.getElementById('quoteAuthor').value.trim();
+
+    if (!text || !author) return alert('Both fields required.');
+
+    const newQuote = {
+      id: Date.now(), // temporary ID
+      text,
+      author,
+      category: 'General',
+      version: 1
+    };
+
+    quotes.push(newQuote);
+    saveToLocalStorage();
+    renderQuotes();
+
+    // Try to post immediately if online
+    if (navigator.onLine) {
+      await postQuoteToServer(newQuote);
+    } else {
+      showStatus('Saved locally. Will sync when online.', 'warning');
+    }
+
+    form.reset();
+  });
 });
 
 // Load from local storage
@@ -71,6 +102,14 @@ async function syncWithServer() {
       return;
     }
 
+    // First, POST local quotes not yet synced
+    for (const quote of quotes) {
+      if (!quote.synced) {
+        await postQuoteToServer(quote);
+        quote.synced = true; // Mark as synced
+      }
+    }
+
     const serverQuotes = await fetchQuotesFromServer();
     const newQuotes = mergeQuotes(quotes, serverQuotes);
 
@@ -84,10 +123,35 @@ async function syncWithServer() {
     }
 
     lastSyncTime = Date.now();
+    saveToLocalStorage();
     showLastSyncTime();
   } catch (err) {
     console.error('Sync failed:', err);
     showStatus('Sync failed: ' + err.message, 'error');
+  }
+}
+
+// POST quote to server
+async function postQuoteToServer(quote) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        title: quote.text,
+        body: quote.author,
+        userId: 1
+      })
+    });
+
+    const data = await res.json();
+    console.log('Posted:', data);
+    showStatus('Quote synced with server', 'success');
+  } catch (error) {
+    console.error('POST failed:', error);
+    showStatus('Failed to post quote', 'error');
   }
 }
 
