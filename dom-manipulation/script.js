@@ -1,225 +1,182 @@
-// Server simulation URL (using JSONPlaceholder)
-const API_URL = 'https://jsonplaceholder.typicode.com/posts';
-
-// Initialize quotes array
-let quotes = [];
-let lastSyncTime = 0;
-let syncInterval = 30000; // Sync every 30 seconds
-let syncInProgress = false;
+// Initialize quotes array from localStorage or use default quotes
+let quotes = JSON.parse(localStorage.getItem('quotes')) || [
+    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Inspiration" },
+    { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Leadership" },
+    { text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs", category: "Life" },
+    { text: "Stay hungry, stay foolish.", author: "Steve Jobs", category: "Inspiration" },
+    { text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela", category: "Perseverance" }
+];
 
 // DOM Content Loaded Event
 document.addEventListener('DOMContentLoaded', function() {
-    loadLocalData();
-    setupEventListeners();
-    startSyncInterval();
-});
-
-// Load data from localStorage
-function loadLocalData() {
-    const localData = localStorage.getItem('quotes');
-    quotes = localData ? JSON.parse(localData) : getDefaultQuotes();
-    const lastFilter = localStorage.getItem('lastFilter');
-    
     populateCategories();
     filterQuotes();
     
+    // Load last selected filter
+    const lastFilter = localStorage.getItem('lastFilter');
     if (lastFilter) {
         document.getElementById('categoryFilter').value = lastFilter;
         filterQuotes();
     }
-}
 
-// Get default quotes if none exist
-function getDefaultQuotes() {
-    return [
-        { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Inspiration", id: Date.now(), version: 1 },
-        { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Leadership", id: Date.now()+1, version: 1 },
-        { text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs", category: "Life", id: Date.now()+2, version: 1 },
-        { text: "Stay hungry, stay foolish.", author: "Steve Jobs", category: "Inspiration", id: Date.now()+3, version: 1 },
-        { text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela", category: "Perseverance", id: Date.now()+4, version: 1 }
-    ];
-}
-
-// Setup event listeners
-function setupEventListeners() {
+    // Add event listener for export button
     document.getElementById('exportBtn').addEventListener('click', exportQuotes);
-    document.getElementById('importBtn').addEventListener('click', () => document.getElementById('fileInput').click());
+    
+    // Add event listener for import button
+    document.getElementById('importBtn').addEventListener('click', function() {
+        document.getElementById('fileInput').click();
+    });
+
+    // Add file input change handler
     document.getElementById('fileInput').addEventListener('change', handleFileImport);
-    document.getElementById('syncNowBtn').addEventListener('click', syncWithServer);
-    document.getElementById('categoryFilter').addEventListener('change', filterQuotes);
-}
+});
 
-// Start periodic sync
-function startSyncInterval() {
-    setInterval(syncWithServer, syncInterval);
-}
+// Function to handle file import
+function handleFileImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-// Sync with server
-async function syncWithServer() {
-    if (syncInProgress) return;
-    syncInProgress = true;
+    // Create new FileReader instance
+    const reader = new FileReader();
     
-    try {
-        showNotification('Syncing with server...', 'info');
-        
-        // Simulate fetching from server
-        const serverQuotes = await fetchServerQuotes();
-        
-        // Merge changes
-        const mergeResult = mergeQuotes(quotes, serverQuotes);
-        
-        if (mergeResult.conflicts.length > 0) {
-            showConflictResolution(mergeResult.conflicts);
-        }
-        
-        if (mergeResult.updated || mergeResult.conflicts.length > 0) {
-            quotes = mergeResult.mergedQuotes;
-            saveLocalData();
-            populateCategories();
-            filterQuotes();
-        }
-        
-        lastSyncTime = Date.now();
-        showNotification('Sync completed', 'success');
-    } catch (error) {
-        showNotification('Sync failed: ' + error.message, 'error');
-    } finally {
-        syncInProgress = false;
-    }
-}
-
-// Simulate fetching from server
-async function fetchServerQuotes() {
-    // In a real app, this would be a fetch() call to your actual API
-    // For simulation, we'll use localStorage as our "server"
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
-    
-    // Simulate server occasionally adding new quotes
-    const shouldAddNewQuote = Math.random() > 0.7;
-    let serverQuotes = JSON.parse(localStorage.getItem('serverQuotes')) || [];
-    
-    if (shouldAddNewQuote) {
-        const newQuote = {
-            id: Date.now(),
-            text: "New quote from server sync",
-            author: "System",
-            category: "Server",
-            version: 1
-        };
-        serverQuotes.push(newQuote);
-        localStorage.setItem('serverQuotes', JSON.stringify(serverQuotes));
-    }
-    
-    return serverQuotes;
-}
-
-// Merge local and server quotes
-function mergeQuotes(localQuotes, serverQuotes) {
-    const mergedQuotes = [...localQuotes];
-    const conflicts = [];
-    
-    serverQuotes.forEach(serverQuote => {
-        const localIndex = mergedQuotes.findIndex(q => q.id === serverQuote.id);
-        
-        if (localIndex === -1) {
-            // New quote from server
-            mergedQuotes.push(serverQuote);
-        } else {
-            // Existing quote - check for conflicts
-            const localQuote = mergedQuotes[localIndex];
-            if (serverQuote.version > localQuote.version) {
-                // Server has newer version
-                if (JSON.stringify(serverQuote) !== JSON.stringify(localQuote)) {
-                    conflicts.push({
-                        id: serverQuote.id,
-                        local: localQuote,
-                        server: serverQuote,
-                        resolved: serverQuote // Default to server version
-                    });
-                }
-                mergedQuotes[localIndex] = serverQuote;
+    // Set up onload event handler
+    reader.onload = function(e) {
+        try {
+            const importedQuotes = JSON.parse(e.target.result);
+            if (Array.isArray(importedQuotes) && importedQuotes.every(isValidQuote)) {
+                quotes = importedQuotes;
+                localStorage.setItem('quotes', JSON.stringify(quotes));
+                populateCategories();
+                filterQuotes();
+                alert('Quotes imported successfully!');
+            } else {
+                alert('Invalid file format. Please import a valid JSON array of quotes with text, author, and category fields.');
             }
+        } catch (error) {
+            alert('Error parsing file: ' + error.message);
         }
-    });
-    
-    return {
-        mergedQuotes,
-        conflicts,
-        updated: serverQuotes.length > 0 || conflicts.length > 0
     };
+    
+    // Set up onerror event handler
+    reader.onerror = function() {
+        alert('Error reading file');
+    };
+    
+    // Read the file as text
+    reader.readAsText(file);
 }
 
-// Show conflict resolution dialog
-function showConflictResolution(conflicts) {
-    const conflictDialog = document.createElement('div');
-    conflictDialog.className = 'conflict-dialog';
-    conflictDialog.innerHTML = `
-        <div class="conflict-content">
-            <h3>Data Conflicts Detected (${conflicts.length})</h3>
-            <div id="conflictList"></div>
-            <button id="resolveConflictsBtn">Accept Server Changes</button>
-            <button id="keepLocalBtn">Keep My Changes</button>
-        </div>
-    `;
+// Helper function to validate quote structure
+function isValidQuote(quote) {
+    return quote && 
+           typeof quote.text === 'string' && 
+           typeof quote.author === 'string' && 
+           typeof quote.category === 'string';
+}
+
+// Function to populate categories dropdown
+function populateCategories() {
+    const categoryFilter = document.getElementById('categoryFilter');
     
-    const conflictList = conflictDialog.querySelector('#conflictList');
-    conflicts.forEach(conflict => {
-        const conflictItem = document.createElement('div');
-        conflictItem.className = 'conflict-item';
-        conflictItem.innerHTML = `
-            <p><strong>Quote ID: ${conflict.id}</strong></p>
-            <div class="conflict-version local">
-                <h4>Your Version</h4>
-                <p>${conflict.local.text}</p>
-                <small>Author: ${conflict.local.author}, Category: ${conflict.local.category}</small>
-            </div>
-            <div class="conflict-version server">
-                <h4>Server Version</h4>
-                <p>${conflict.server.text}</p>
-                <small>Author: ${conflict.server.author}, Category: ${conflict.server.category}</small>
-            </div>
-            <select class="resolve-select">
-                <option value="server">Use Server Version</option>
-                <option value="local">Keep My Version</option>
-            </select>
+    // Clear existing options except "All Categories"
+    while (categoryFilter.options.length > 1) {
+        categoryFilter.remove(1);
+    }
+    
+    // Get unique categories from quotes
+    const categories = [...new Set(quotes.map(quote => quote.category))];
+    
+    // Add categories to dropdown
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+}
+
+// Function to filter quotes based on selected category
+function filterQuotes() {
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const quotesContainer = document.getElementById('quotesContainer');
+    
+    // Save the selected filter
+    localStorage.setItem('lastFilter', selectedCategory);
+    
+    // Clear the container
+    quotesContainer.innerHTML = '';
+    
+    // Filter quotes
+    const filteredQuotes = selectedCategory === 'all' 
+        ? quotes 
+        : quotes.filter(quote => quote.category === selectedCategory);
+    
+    // Display filtered quotes
+    filteredQuotes.forEach(quote => {
+        const quoteElement = document.createElement('div');
+        quoteElement.className = 'quote-container';
+        quoteElement.innerHTML = `
+            <p>"${quote.text}"</p>
+            <p><em>- ${quote.author}</em></p>
+            <small>Category: ${quote.category}</small>
         `;
-        conflictList.appendChild(conflictItem);
-    });
-    
-    document.body.appendChild(conflictDialog);
-    
-    conflictDialog.querySelector('#resolveConflictsBtn').addEventListener('click', () => {
-        // Use server versions for all conflicts
-        conflicts.forEach(conflict => {
-            const index = quotes.findIndex(q => q.id === conflict.id);
-            if (index !== -1) {
-                quotes[index] = conflict.server;
-            }
-        });
-        saveLocalData();
-        conflictDialog.remove();
-        showNotification('Conflicts resolved using server versions', 'success');
-    });
-    
-    conflictDialog.querySelector('#keepLocalBtn').addEventListener('click', () => {
-        // Keep local versions for all conflicts
-        conflictDialog.remove();
-        showNotification('Conflicts resolved keeping your versions', 'success');
+        quotesContainer.appendChild(quoteElement);
     });
 }
 
-// Notification system
-function showNotification(message, type) {
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
+// Function to add a new quote
+function addQuote() {
+    const text = document.getElementById('newQuoteText').value.trim();
+    const author = document.getElementById('newQuoteAuthor').value.trim();
+    const category = document.getElementById('newQuoteCategory').value.trim();
     
-    document.body.appendChild(notification);
+    if (!text || !author || !category) {
+        alert('Please fill in all fields');
+        return;
+    }
     
-    setTimeout(() => {
-        notification.classList.add('fade-out');
-        setTimeout(() => notification.remove(), 500);
-    }, 3000);
+    // Add new quote
+    const newQuote = { text, author, category };
+    quotes.push(newQuote);
+    
+    // Save to localStorage
+    localStorage.setItem('quotes', JSON.stringify(quotes));
+    
+    // Update UI
+    populateCategories(); // In case it's a new category
+    filterQuotes();
+    
+    // Clear form
+    document.getElementById('newQuoteText').value = '';
+    document.getElementById('newQuoteAuthor').value = '';
+    document.getElementById('newQuoteCategory').value = '';
 }
 
-// [Previous functions (populateCategories, filterQuotes, addQuote, exportQuotes, handleFileImport) remain the same]
+// Function to export quotes as JSON file
+function exportQuotes() {
+    // Get current filtered quotes
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const quotesToExport = selectedCategory === 'all' 
+        ? quotes 
+        : quotes.filter(quote => quote.category === selectedCategory);
+    
+    // Create JSON string with proper formatting
+    const jsonString = JSON.stringify(quotesToExport, null, 2);
+    
+    // Create a Blob with the JSON data
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    
+    // Create download link
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = selectedCategory === 'all' ? 'all_quotes.json' : `${selectedCategory}_quotes.json`;
+    
+    // Trigger download
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
