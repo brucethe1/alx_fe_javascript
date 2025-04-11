@@ -1,40 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Quote Generator with Sync</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quote Poster</title>
 </head>
 <body>
-    <div id="app">
-        <h1>Dynamic Quote Generator</h1>
-        
-        <div class="sync-controls">
-            <button id="syncNowBtn">Sync Now</button>
-            <span id="lastSync"></span>
-        </div>
-        
-        <select id="categoryFilter" class="category-filter">
-            <option value="all">All Categories</option>
-        </select>
-        
-        <div id="quotesContainer"></div>
-        
-        <div class="action-buttons">
-            <button id="exportBtn" class="export-btn">Export Quotes</button>
-            <button id="importBtn" class="file-import-btn">Import Quotes</button>
-            <input type="file" id="fileInput" accept=".json">
-        </div>
-        
-        <div class="add-quote-form">
-            <h2>Add New Quote</h2>
-            <input type="text" id="newQuoteText" placeholder="Quote text">
-            <input type="text" id="newQuoteAuthor" placeholder="Author">
-            <input type="text" id="newQuoteCategory" placeholder="Category">
-            <button onclick="addQuote()">Add Quote</button>
-        </div>
-    </div>
+  <h1>Quotes</h1>
 
-    <script src="script.js"></script>
+  <form id="quoteForm">
+    <input type="text" id="quoteText" placeholder="Quote" required />
+    <input type="text" id="quoteAuthor" placeholder="Author" required />
+    <button type="submit">Add Quote</button>
+  </form>
+
+  <ul id="quoteList"></ul>
+
+  <script src="script.js"></script>
 </body>
 </html>
