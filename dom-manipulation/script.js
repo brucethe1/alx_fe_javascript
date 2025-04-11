@@ -1,59 +1,117 @@
+// Constants
 const API_URL = 'https://jsonplaceholder.typicode.com/posts';
-const quoteList = document.getElementById('quoteList');
-const form = document.getElementById('quoteForm');
+const SYNC_INTERVAL = 30000;
 
-document.addEventListener('DOMContentLoaded', () => {
-  fetchQuotes();
+let quotes = [];
+let lastSyncTime = null;
+let isOffline = false;
+
+// On load
+document.addEventListener('DOMContentLoaded', async () => {
+  loadFromLocalStorage();
+  renderQuotes();
+  showLastSyncTime();
+  await syncWithServer();
+  setInterval(syncWithServer, SYNC_INTERVAL);
 });
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
+// Load from local storage
+function loadFromLocalStorage() {
+  const saved = localStorage.getItem('quotes');
+  quotes = saved ? JSON.parse(saved) : [];
+}
 
-  const text = document.getElementById('quoteText').value.trim();
-  const author = document.getElementById('quoteAuthor').value.trim();
+// Save to local storage
+function saveToLocalStorage() {
+  localStorage.setItem('quotes', JSON.stringify(quotes));
+  localStorage.setItem('lastSync', Date.now().toString());
+}
 
-  if (!text || !author) return alert("Fill both fields");
+// Show last sync time
+function showLastSyncTime() {
+  const display = document.getElementById('lastSyncDisplay');
+  const last = localStorage.getItem('lastSync');
+  display.textContent = last
+    ? `Last sync: ${new Date(parseInt(last)).toLocaleTimeString()}`
+    : 'Never synced';
+}
 
-  const newQuote = {
-    title: text,
-    body: author,
-    userId: 1
-  };
+// Render quotes
+function renderQuotes() {
+  const list = document.getElementById('quoteList');
+  list.innerHTML = '';
 
+  quotes.forEach(q => {
+    const item = document.createElement('li');
+    item.textContent = `"${q.text}" — ${q.author}`;
+    list.appendChild(item);
+  });
+}
+
+// Fetch from server
+async function fetchQuotesFromServer() {
+  const res = await fetch(API_URL);
+  const data = await res.json();
+
+  return data.slice(0, 10).map(post => ({
+    id: post.id,
+    text: post.title,
+    author: 'Unknown',
+    category: 'General',
+    version: 1
+  }));
+}
+
+// Sync with server
+async function syncWithServer() {
   try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(newQuote)
-    });
+    if (!navigator.onLine) {
+      isOffline = true;
+      showStatus('Offline: Using local data', 'warning');
+      return;
+    }
 
-    const result = await response.json();
-    console.log('Posted:', result);
-    addQuoteToList(text, author);
-    form.reset();
-    alert("Quote posted successfully (simulated)");
-  } catch (error) {
-    console.error("POST failed", error);
-    alert("POST failed");
-  }
-});
+    const serverQuotes = await fetchQuotesFromServer();
+    const newQuotes = mergeQuotes(quotes, serverQuotes);
 
-async function fetchQuotes() {
-  try {
-    const response = await fetch(API_URL);
-    const data = await response.json();
-    const quotes = data.slice(0, 5);
-    quotes.forEach(q => addQuoteToList(q.title, `User ${q.userId}`));
+    if (newQuotes.length > quotes.length) {
+      quotes = newQuotes;
+      saveToLocalStorage();
+      renderQuotes();
+      showStatus('Synced with server', 'success');
+    } else {
+      showStatus('Already up to date', 'info');
+    }
+
+    lastSyncTime = Date.now();
+    showLastSyncTime();
   } catch (err) {
-    console.error("GET failed", err);
-    alert("Failed to fetch quotes");
+    console.error('Sync failed:', err);
+    showStatus('Sync failed: ' + err.message, 'error');
   }
 }
 
-function addQuoteToList(text, author) {
-  const li = document.createElement('li');
-  li.textContent = `"${text}" — ${author}`;
-  quoteList.appendChild(li);
+// Merge quotes
+function mergeQuotes(local, server) {
+  const merged = [...local];
+
+  server.forEach(sq => {
+    if (!local.find(lq => lq.id === sq.id)) {
+      merged.push(sq);
+    }
+  });
+
+  return merged;
+}
+
+// Show status message
+function showStatus(message, type = 'info') {
+  const notif = document.createElement('div');
+  notif.className = `status ${type}`;
+  notif.textContent = message;
+  document.body.appendChild(notif);
+
+  setTimeout(() => {
+    notif.remove();
+  }, 3000);
 }
