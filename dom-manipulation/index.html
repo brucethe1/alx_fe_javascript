@@ -27,6 +27,18 @@
             background-color: #f0f0f0;
             border-radius: 5px;
         }
+        .export-btn {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .export-btn:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
 <body>
@@ -40,6 +52,8 @@
     <div id="quotesContainer">
         <!-- Quotes will be displayed here -->
     </div>
+    
+    <button id="exportBtn" class="export-btn">Export Quotes</button>
     
     <div class="add-quote-form">
         <h2>Add New Quote</h2>
